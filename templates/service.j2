@@ -17,8 +17,8 @@ Requires={{ key }}.service
 TimeoutStartSec=0
 Restart=always
 RestartSec=10s
-{% if 'environments' in service %}{% for key, value in service['environments'].items() %}
-Environment={{ key }}={{ value | quote}}
+{% if 'environments' in service %}{% for key,value in service['environments']|dictsort %}
+Environment={{ key }}={{ service['environments'][key] | quote}}
 {% endfor %}{% endif %}
 # ExecStartPre=-/usr/bin/docker stop {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
 
@@ -52,7 +52,7 @@ ExecStart=/usr/bin/docker run \
   --publish {{ port }} \
 {% endfor %}
   --name={{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service \
-{% if 'environments' in service %}{% for key, value in service['environments'].items() %}
+{% if 'environments' in service %}{% for key, value in service['environments']|dictsort %}
   -e "{{ key }}" \
 {% endfor %}{% endif %}
   {{ service.image }} {{ service['args'] | default('') }}
