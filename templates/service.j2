@@ -1,0 +1,62 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ service['description'] | default('') }}
+After=docker.service
+PartOf=docker.service
+Requires=docker.service
+{% for key in docker_systemd_default_dependency_services %}
+After={{ key }}.service
+Requires={{ key }}.service
+{% endfor %}
+{% for key in service['required_services'] | default([]) %}
+After={{ key }}.service
+Requires={{ key }}.service
+{% endfor %}
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+RestartSec=10s
+{% if 'environments' in service %}{% for key, value in service['environments'].items() %}
+Environment={{ key }}={{ value | quote}}
+{% endfor %}{% endif %}
+# ExecStartPre=-/usr/bin/docker stop {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
+
+ExecStartPre=-/usr/bin/docker rm -f {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
+
+ExecStop=/usr/bin/docker stop {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
+
+SyslogIdentifier={{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}
+
+ExecStartPre=-/usr/bin/docker pull {{ service.image }}
+ExecStart=/usr/bin/docker run \
+{% for extra in service['extras'] | default([]) %}
+  "{{ extra }}" \
+{% endfor %}
+{% for volume in service['volumes'] | default([]) %}
+  -v "{{ volume }}" \
+{% endfor %}
+{% for label in service['labels'] | default([]) %}
+  -l "{{ label }}" \
+{% endfor %}
+{% for device in service['devices'] | default([]) %}
+  --device "{{ device }}" \
+{% endfor %}
+{% if "groups" in service %}
+  --group-add {{ service['groups'] | join(',') }}
+{% endif %}
+{% for device in service['devices'] | default([]) %}
+  --device "{{ device }}" \
+{% endfor %}
+{% for port in service['ports'] | default([]) %}
+  --publish {{ port }} \
+{% endfor %}
+  --name={{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service \
+{% if 'environments' in service %}{% for key, value in service['environments'].items() %}
+  -e "{{ key }}" \
+{% endfor %}{% endif %}
+  {{ service.image }} {{ service['args'] | default('') }}
+
+
+[Install]
+WantedBy=docker.service

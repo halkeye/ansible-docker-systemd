@@ -1,0 +1,23 @@
+---
+- debug:
+    msg: "{{item.key}}: {{item.value}}"
+  with_dict: "{{ service }}"
+
+- name: Create systemd template
+  become: true
+  when: 'not "enabled" in service or service.enabled == True'
+  template:
+    src: service.j2
+    dest: "{{ docker_systemd_service_location }}/{{ service.name }}.service"
+    mode: '0600'
+    owner: root
+    group: root
+    #    validate: /usr/bin/systemd-analyze verify {{ service_name }}
+    #
+    #
+#
+##- name: enable a timer for dnf-automatic
+##	systemd:
+##		name: dnf-automatic.timer
+##		state: started
+##		enabled: yes

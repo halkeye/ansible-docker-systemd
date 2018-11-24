@@ -1,0 +1,14 @@
+---
+- name: Fail when image is not defined
+  fail:
+    msg: image is not defined
+  when: service.image is not defined
+
+#- name: Load distro-specific vars
+#  include_vars: "{{ ansible_os_family }}.yml"
+
+- include: install.yml
+  when: 'not "enabled" in service or service.enabled == True'
+
+- include: uninstall.yml
+  when: '"enabled" in service and service.enabled == False'
