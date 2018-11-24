@@ -1,8 +1,4 @@
 ---
-- debug:
-    msg: "{{item.key}}: {{item.value}}"
-  with_dict: "{{ service }}"
-
 - name: Create systemd template
   become: true
   when: 'not "enabled" in service or service.enabled == True'
