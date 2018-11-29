@@ -43,7 +43,7 @@ ExecStart=/usr/bin/docker run \
   --device "{{ device }}" \
 {% endfor %}
 {% if "groups" in service %}
-  --group-add {{ service['groups'] | join(',') }}
+  --group-add {{ service['groups'] | join(',') }} \
 {% endif %}
 {% for device in service['devices'] | default([]) %}
   --device "{{ device }}" \
