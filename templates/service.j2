@@ -1,4 +1,7 @@
 # {{ ansible_managed }}
+{% macro service_name(service) -%}
+{{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}
+{%- endmacro %}
 [Unit]
 Description={{ service['description'] | default('') }}
 After=docker.service
@@ -20,14 +23,10 @@ RestartSec=10s
 {% if 'environments' in service %}{% for key,value in service['environments']|dictsort %}
 Environment={{ key }}={{ service['environments'][key] | quote}}
 {% endfor %}{% endif %}
-# ExecStartPre=-/usr/bin/docker stop {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
-
-ExecStartPre=-/usr/bin/docker rm -f {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
-
-ExecStop=/usr/bin/docker stop {{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service
-
-SyslogIdentifier={{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}
-
+# ExecStartPre=-/usr/bin/docker stop {{ service_name(service) }}
+ExecStartPre=-/usr/bin/docker rm -f {{ service_name(service) }}
+ExecStop=/usr/bin/docker stop {{ service_name(service) }}
+SyslogIdentifier={{ service_name(service) }}
 ExecStartPre=-/usr/bin/docker pull {{ service.image }}
 ExecStart=/usr/bin/docker run \
 {% for extra in service['extras'] | default([]) %}
@@ -48,7 +47,7 @@ ExecStart=/usr/bin/docker run \
 {% for port in service['ports'] | default([]) %}
   --publish {{ port }} \
 {% endfor %}
-  --name={{ service.name | replace('@', '') }}{% if '@' in service.name %}_%i{% endif %}.service \
+  --name={{ service_name(service) }} \
 {% if 'environments' in service %}{% for key, value in service['environments']|dictsort %}
   -e "{{ key }}" \
 {% endfor %}{% endif %}
