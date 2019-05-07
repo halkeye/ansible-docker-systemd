@@ -4,17 +4,9 @@
 {%- endmacro %}
 [Unit]
 Description={{ service['description'] | default('') }}
-After=docker.service
-PartOf=docker.service
-Requires=docker.service
-{% for key in docker_systemd_default_dependency_services %}
-After={{ key }}.service
-Requires={{ key }}.service
-{% endfor %}
-{% for key in service['required_services'] | default([]) %}
-After={{ key }}.service
-Requires={{ key }}.service
-{% endfor %}
+# PartOf=docker.service
+After={{ (['docker'] + service['required_services'] | default([]) + docker_systemd_default_dependency_services) | map('regex_replace', '$', '.service') | join(" ") }}
+Requires={{ (['docker'] + service['required_services'] | default([]) + docker_systemd_default_dependency_services) | map('regex_replace', '$', '.service') | join(" ") }}
 
 [Service]
 TimeoutStartSec=0
